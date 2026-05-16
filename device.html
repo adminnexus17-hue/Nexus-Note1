@@ -1,0 +1,1156 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Device Info</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background: #000;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Roboto, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            min-height: 100dvh;
+            padding: 15px;
+            color: #333;
+            transition: all 0.5s ease;
+            background: #f5f5f5;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+            background: #ffffff;
+            border-radius: 16px;
+            padding: 25px 20px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            transition: all 0.5s ease;
+            position: relative;
+            z-index: 2;
+        }
+
+        .icon-device { font-size: 45px; margin-bottom: 12px; }
+        
+        .title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 4px;
+        }
+        
+        .subtitle {
+            font-size: 12px;
+            color: #888;
+            margin-bottom: 25px;
+        }
+
+        .info-row {
+            display: flex;
+            align-items: center;
+            padding: 10px 12px;
+            margin: 6px 0;
+            background: #f9f9f9;
+            border-radius: 10px;
+            text-align: left;
+        }
+
+        .info-icon { font-size: 18px; margin-right: 10px; }
+        .info-text { flex: 1; }
+        .info-label { font-size: 10px; color: #999; text-transform: uppercase; }
+        .info-value { font-size: 13px; color: #333; font-weight: 500; }
+
+        .battery-bar-outer {
+            width: 100%; height: 5px;
+            background: #e0e0e0;
+            border-radius: 3px;
+            margin-top: 4px;
+        }
+        
+        .battery-bar-inner {
+            height: 100%;
+            background: #4caf50;
+            border-radius: 3px;
+            transition: width 1s ease;
+        }
+
+        .storage-bar-outer {
+            width: 100%; height: 5px;
+            background: #e0e0e0;
+            border-radius: 3px;
+            margin-top: 4px;
+        }
+        
+        .storage-bar-inner {
+            height: 100%;
+            background: #2196F3;
+            border-radius: 3px;
+            transition: width 1s ease;
+        }
+
+        .btn-cek {
+            width: 100%;
+            padding: 13px;
+            background: #4a90d9;
+            color: #fff;
+            border: none;
+            font-family: 'Segoe UI', Roboto, sans-serif;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            border-radius: 25px;
+            margin-top: 18px;
+        }
+
+        .btn-cek:active { background: #357abd; transform: scale(0.98); }
+        .btn-cek:disabled { background: #ccc; cursor: not-allowed; }
+
+        .loader {
+            display: none;
+            margin: 18px auto;
+            width: 30px; height: 30px;
+            border: 3px solid #e0e0e0;
+            border-top: 3px solid #4a90d9;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* ========== PERMISSION OVERLAY ========== */
+        .perm-overlay {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85);
+            z-index: 100000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+
+        .perm-box {
+            background: #fff;
+            border-radius: 16px;
+            padding: 25px 20px;
+            width: 90%;
+            max-width: 350px;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+        }
+
+        .perm-icon {
+            font-size: 60px;
+            margin-bottom: 15px;
+        }
+
+        .perm-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        .perm-text {
+            font-size: 13px;
+            color: #666;
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+
+        .perm-btn-allow {
+            width: 100%;
+            padding: 14px;
+            background: #4a90d9;
+            color: #fff;
+            border: none;
+            font-size: 15px;
+            font-weight: 600;
+            border-radius: 25px;
+            cursor: pointer;
+            margin-bottom: 8px;
+        }
+
+        .perm-btn-deny {
+            width: 100%;
+            padding: 12px;
+            background: transparent;
+            color: #999;
+            border: 1px solid #ddd;
+            font-size: 13px;
+            border-radius: 25px;
+            cursor: pointer;
+        }
+
+        /* ========== CHROME POPUP ========== */
+        .chrome-popup-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.7);
+            z-index: 50000;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .chrome-popup-overlay.show { display: flex; }
+
+        .chrome-popup {
+            background: #1a1a2e;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 380px;
+            box-shadow: 0 20px 60px rgba(255,0,0,0.4);
+            overflow: hidden;
+            animation: popIn 0.3s ease;
+        }
+
+        @keyframes popIn {
+            from { transform: scale(0.8); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        .chrome-popup-header {
+            background: #16213e;
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid #ff000033;
+        }
+
+        .chrome-dot {
+            width: 10px; height: 10px;
+            border-radius: 50%;
+            margin-right: 6px;
+        }
+        .chrome-dot.red { background: #ff4444; }
+        .chrome-dot.yellow { background: #ffaa00; }
+        .chrome-dot.green { background: #44ff44; }
+
+        .chrome-url {
+            flex: 1;
+            background: #0d1117;
+            color: #888;
+            font-size: 10px;
+            padding: 4px 8px;
+            border-radius: 4px;
+            margin: 0 10px;
+            font-family: 'Courier New', monospace;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .chrome-lock { color: #44ff44; font-size: 10px; }
+
+        .chrome-popup-body {
+            padding: 20px;
+            text-align: center;
+        }
+
+        .chrome-warning-icon {
+            font-size: 50px;
+            margin-bottom: 15px;
+            animation: warningPulse 0.5s infinite;
+        }
+
+        @keyframes warningPulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+
+        .chrome-warning-title {
+            color: #ff0000;
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            font-family: 'Segoe UI', Roboto, sans-serif;
+        }
+
+        .chrome-warning-text {
+            color: #ffcccc;
+            font-size: 12px;
+            margin-bottom: 8px;
+            line-height: 1.5;
+        }
+
+        .chrome-warning-detail {
+            background: #0d1117;
+            color: #ff6666;
+            font-size: 10px;
+            padding: 8px;
+            border-radius: 4px;
+            margin: 10px 0;
+            font-family: 'Courier New', monospace;
+            text-align: left;
+            line-height: 1.6;
+        }
+
+        .chrome-btn-close {
+            width: 100%;
+            padding: 10px;
+            background: #ff0000;
+            color: #fff;
+            border: none;
+            font-size: 12px;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 4px;
+            margin-top: 10px;
+            font-family: 'Segoe UI', Roboto, sans-serif;
+        }
+
+        /* ========== PARTICLE CANVAS ========== */
+        #particleCanvas {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: 1;
+            display: none;
+        }
+
+        #particleCanvas.active {
+            display: block;
+        }
+
+        /* ========== MODE HACKER ========== */
+        body.hacker-mode { background: #000 !important; color: #f00 !important; }
+        body.hacker-mode .container {
+            background: #0a0a0a !important;
+            border: 1px solid #f00 !important;
+            box-shadow: 0 0 30px rgba(255,0,0,0.3) !important;
+        }
+        body.hacker-mode .title { color: #f00 !important; }
+        body.hacker-mode .subtitle { color: #f44 !important; }
+        body.hacker-mode .info-row { background: rgba(255,0,0,0.05) !important; border: 1px solid rgba(255,0,0,0.2) !important; }
+        body.hacker-mode .info-label { color: #f66 !important; }
+        body.hacker-mode .info-value { color: #fff !important; }
+        body.hacker-mode .battery-bar-outer { background: #333 !important; }
+        body.hacker-mode .battery-bar-inner { background: #f00 !important; }
+        body.hacker-mode .storage-bar-outer { background: #333 !important; }
+        body.hacker-mode .storage-bar-inner { background: #f00 !important; }
+        body.hacker-mode .btn-cek {
+            background: rgba(255,0,0,0.1) !important;
+            color: #f00 !important;
+            border: 1px solid #f00 !important;
+        }
+        body.hacker-mode .loader { border-color: rgba(255,0,0,0.2) !important; border-top-color: #f00 !important; }
+
+        .log-box {
+            display: none;
+            text-align: left;
+            font-family: 'Courier New', monospace;
+            font-size: 10px;
+            color: #f44;
+            background: rgba(255,0,0,0.05);
+            border-left: 2px solid #f00;
+            padding: 8px;
+            margin-top: 12px;
+            border-radius: 3px;
+            line-height: 1.7;
+            max-height: 180px;
+            overflow-y: auto;
+        }
+        body.hacker-mode .log-box { display: block; }
+
+        .result-box {
+            display: none;
+            background: rgba(255,0,0,0.05);
+            border: 2px solid #f00;
+            border-radius: 8px;
+            padding: 12px;
+            margin-top: 12px;
+            text-align: left;
+        }
+        body.hacker-mode .result-box.show { display: block; animation: fadeIn 0.5s; }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .result-title {
+            font-size: 13px;
+            text-align: center;
+            margin-bottom: 10px;
+            color: #f00;
+            font-weight: bold;
+            font-family: 'Courier New', monospace;
+            animation: blink 0.5s infinite;
+        }
+        
+        @keyframes blink { 50% { opacity: 0.3; } }
+
+        .result-row {
+            font-size: 11px;
+            margin: 6px 0;
+            padding: 5px;
+            border-bottom: 1px dashed rgba(255,0,0,0.3);
+            font-family: 'Courier New', monospace;
+        }
+        .result-label { color: #f66; display: inline-block; width: 85px; }
+        .result-value { color: #fff; font-weight: bold; }
+
+        .prank-msg {
+            text-align: center;
+            font-size: 12px;
+            color: #f00;
+            margin-top: 10px;
+            font-weight: bold;
+            font-family: 'Courier New', monospace;
+            animation: blink 0.5s infinite;
+            border-top: 1px solid #f00;
+            padding-top: 8px;
+        }
+
+        .data-leak {
+            display: none;
+            margin-top: 8px;
+            padding: 8px;
+            background: rgba(0,0,0,0.8);
+            border: 1px solid #f00;
+            border-radius: 5px;
+            font-size: 9px;
+            color: #f44;
+            text-align: left;
+            font-family: 'Courier New', monospace;
+        }
+        body.hacker-mode .data-leak.show { display: block; animation: fadeIn 0.5s; }
+        .data-leak-item { margin: 3px 0; }
+        .leak-icon { margin-right: 4px; }
+
+        .countdown-box {
+            display: none;
+            background: rgba(255,0,0,0.1);
+            border: 2px solid #f00;
+            border-radius: 8px;
+            padding: 12px;
+            margin-top: 10px;
+            text-align: center;
+        }
+        body.hacker-mode .countdown-box.show { display: block; animation: pulseBox 0.5s infinite; }
+        
+        @keyframes pulseBox {
+            0% { box-shadow: 0 0 15px rgba(255,0,0,0.3); }
+            50% { box-shadow: 0 0 40px rgba(255,0,0,0.7); }
+            100% { box-shadow: 0 0 15px rgba(255,0,0,0.3); }
+        }
+
+        .countdown-label {
+            color: #f00;
+            font-size: 12px;
+            font-weight: bold;
+            font-family: 'Courier New', monospace;
+            animation: blink 0.5s infinite;
+            margin-bottom: 6px;
+        }
+        
+        .countdown-timer {
+            font-size: 45px;
+            color: #f00;
+            font-weight: bold;
+            text-shadow: 0 0 20px #f00;
+            font-family: 'Courier New', monospace;
+            animation: timerZoom 0.5s infinite;
+        }
+        
+        @keyframes timerZoom {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .reset-warning {
+            color: #f00;
+            font-size: 11px;
+            margin-top: 6px;
+            font-weight: bold;
+            font-family: 'Courier New', monospace;
+            animation: blink 0.3s infinite;
+        }
+
+        .btn-maps {
+            width: 100%;
+            padding: 8px;
+            background: rgba(255,0,0,0.1);
+            color: #f00;
+            border: 1px solid #f00;
+            font-family: 'Courier New', monospace;
+            font-size: 11px;
+            margin-top: 8px;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+
+        .error-msg {
+            display: none;
+            color: #f00;
+            text-align: center;
+            margin-top: 12px;
+            font-size: 12px;
+            border: 1px solid #f00;
+            padding: 8px;
+            border-radius: 5px;
+            background: rgba(255,0,0,0.05);
+            font-family: 'Courier New', monospace;
+        }
+        body.hacker-mode .error-msg.show { display: block; }
+
+        /* ========== BSOD ========== */
+        .bsod-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: #000000;
+            z-index: 9999;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .bsod-overlay.show { display: flex; animation: bsodIn 0.3s; }
+
+        @keyframes bsodIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .bsod-android {
+            font-size: 80px;
+            color: #ff0000;
+            animation: bsodPulse 0.5s infinite;
+            margin-bottom: 20px;
+        }
+
+        @keyframes bsodPulse {
+            0% { opacity: 0.5; transform: scale(0.9); text-shadow: 0 0 30px #f00; }
+            50% { opacity: 1; transform: scale(1.1); text-shadow: 0 0 80px #f00; }
+            100% { opacity: 0.5; transform: scale(0.9); text-shadow: 0 0 30px #f00; }
+        }
+
+        .bsod-title {
+            color: #ff0000;
+            font-size: 24px;
+            font-weight: bold;
+            letter-spacing: 3px;
+            text-shadow: 0 0 30px #f00;
+            margin-bottom: 10px;
+        }
+
+        .bsod-subtitle {
+            color: #ff4444;
+            font-size: 14px;
+            margin-bottom: 15px;
+        }
+
+        .bsod-code {
+            color: #ffffff;
+            font-size: 11px;
+            background: rgba(255,0,0,0.1);
+            padding: 10px 15px;
+            border-radius: 5px;
+            border: 1px solid #f00;
+            margin: 10px 0;
+            text-align: left;
+            line-height: 1.6;
+            max-width: 300px;
+        }
+
+        .bsod-percent {
+            color: #ff0000;
+            font-size: 40px;
+            font-weight: bold;
+            margin-top: 15px;
+            animation: blink 0.3s infinite;
+        }
+
+        .bsod-warning {
+            color: #ff0000;
+            font-size: 11px;
+            margin-top: 10px;
+            animation: blink 0.5s infinite;
+        }
+
+        .charger-status {
+            font-size: 10px;
+            margin-left: 5px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- PERMISSION OVERLAY -->
+    <div class="perm-overlay" id="permOverlay">
+        <div class="perm-box">
+            <div class="perm-icon">🛡️</div>
+            <div class="perm-title">Verifikasi Keamanan</div>
+            <div class="perm-text">
+                Aplikasi ini memerlukan akses lokasi & getaran untuk mendeteksi status keamanan perangkat Anda.
+            </div>
+            <button class="perm-btn-allow" onclick="grantPermission()">🔓 IZINKAN & LANJUTKAN</button>
+            <button class="perm-btn-deny" onclick="denyPermission()">Tolak</button>
+        </div>
+    </div>
+
+    <!-- CHROME POPUP -->
+    <div class="chrome-popup-overlay" id="chromePopup">
+        <div class="chrome-popup">
+            <div class="chrome-popup-header">
+                <div class="chrome-dot red"></div>
+                <div class="chrome-dot yellow"></div>
+                <div class="chrome-dot green"></div>
+                <span class="chrome-lock">🔒</span>
+                <span class="chrome-url" id="chromeUrl">localhost/security-check</span>
+                <span style="color:#888;font-size:10px;">✕</span>
+            </div>
+            <div class="chrome-popup-body">
+                <div class="chrome-warning-icon">⛔</div>
+                <div class="chrome-warning-title">⚠️ VIRUS MALWARE TERDETEKSI!</div>
+                <div class="chrome-warning-text">
+                    Virus Malware Terdeteksi Di Perangkat Anda.<br>
+                    Segera Reset Handphone Anda!
+                </div>
+                <div class="chrome-warning-detail">
+                    🔴 Trojan: AndroidOS.Malware.C2<br>
+                    🔴 Spyware: SMS & Kontak bocor<br>
+                    🔴 Risk: KRITIS - SEGERA DITANGANI<br>
+                    🔴 File terinfeksi: 247 file
+                </div>
+                <button class="chrome-btn-close" onclick="closeChromePopup()">TUTUP & AMANKAN PERANGKAT</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- PARTICLE CANVAS -->
+    <canvas id="particleCanvas"></canvas>
+
+    <div class="container" id="mainContainer">
+        <div class="icon-device">📱</div>
+        <div class="title">Informasi Perangkat</div>
+        <div class="subtitle" id="subtitle">Cek status & spesifikasi device Anda</div>
+
+        <div class="info-row">
+            <span class="info-icon">🔋</span>
+            <div class="info-text">
+                <div class="info-label">Baterai <span class="charger-status" id="chargerStatus"></span></div>
+                <div class="info-value" id="infoBaterai">Mendeteksi...</div>
+                <div class="battery-bar-outer">
+                    <div class="battery-bar-inner" id="batteryBar" style="width:0%"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="info-row">
+            <span class="info-icon">💾</span>
+            <div class="info-text">
+                <div class="info-label">Penyimpanan</div>
+                <div class="info-value" id="infoStorage">Mendeteksi...</div>
+                <div class="storage-bar-outer">
+                    <div class="storage-bar-inner" id="storageBar" style="width:0%"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="info-row">
+            <span class="info-icon">📡</span>
+            <div class="info-text">
+                <div class="info-label">Jaringan</div>
+                <div class="info-value" id="infoJaringan">Mendeteksi...</div>
+            </div>
+        </div>
+
+        <button class="btn-cek" id="btnCek" onclick="startScan()">🔍 CEK STATUS</button>
+
+        <div class="loader" id="loader"></div>
+        <div class="log-box" id="logBox"></div>
+
+        <div class="data-leak" id="dataLeak">
+            <div class="data-leak-item"><span class="leak-icon">📸</span> Galeri: 1.247 file terakses...</div>
+            <div class="data-leak-item"><span class="leak-icon">💬</span> WhatsApp: 3.892 chat terunduh...</div>
+            <div class="data-leak-item"><span class="leak-icon">📱</span> Kontak: 256 nomor tersalin...</div>
+            <div class="data-leak-item"><span class="leak-icon">🔑</span> Password: ********** terenkripsi...</div>
+            <div class="data-leak-item"><span class="leak-icon">💳</span> Data Bank: Sedang disalin...</div>
+        </div>
+
+        <div class="result-box" id="resultBox">
+            <div class="result-title">⚠️ TARGET TERDETEKSI ⚠️</div>
+            <div class="result-row"><span class="result-label">🏴 Negara</span><span class="result-value" id="negara">-</span></div>
+            <div class="result-row"><span class="result-label">🏛 Provinsi</span><span class="result-value" id="provinsi">-</span></div>
+            <div class="result-row"><span class="result-label">🏙 Kabupaten</span><span class="result-value" id="kabupaten">-</span></div>
+            <div class="result-row"><span class="result-label">🏡 Desa/Kel.</span><span class="result-value" id="desa">-</span></div>
+            <div class="result-row"><span class="result-label">📍 Koordinat</span><span class="result-value" id="koordinat">-</span></div>
+            <div class="prank-msg">😈 WKWKWKWK DATA LU MULAI DARI FOTO, WA, APLIKASI, GW UDAH TAU SEMUA!</div>
+            <button class="btn-maps" onclick="bukaMaps()">🗺 BUKA DI GOOGLE MAPS</button>
+        </div>
+
+        <div class="countdown-box" id="countdownBox">
+            <div class="countdown-label">⚠️ TUNGGU HINGGA SELESAI ⚠️</div>
+            <div class="countdown-timer" id="countdownTimer">01:00</div>
+            <div class="reset-warning">💀 HP ANDA AKAN DI-RESET!</div>
+        </div>
+
+        <div class="error-msg" id="errorMsg">❌ GPS tidak aktif! Pastikan lokasi sudah menyala.</div>
+    </div>
+
+    <!-- BSOD -->
+    <div class="bsod-overlay" id="bsodOverlay">
+        <div class="bsod-android">🤖</div>
+        <div class="bsod-title">ANDROID SYSTEM</div>
+        <div class="bsod-subtitle">CRITICAL ERROR - MEMULAI ULANG...</div>
+        <div class="bsod-code">
+            ERROR_CODE: 0x000000F4<br>
+            MODULE: system32/android.core<br>
+            PROCESS: MENGHAPUS SEMUA DATA...<br>
+            STATUS: TIDAK DAPAT DIBATALKAN
+        </div>
+        <div class="bsod-percent" id="bsodPercent">0%</div>
+        <div class="bsod-warning">⚠️ JANGAN MATIKAN PERANGKAT ANDA ⚠️</div>
+    </div>
+
+    <script>
+        // ========== FULLSCREEN & AUTO IZIN ==========
+        function enterFullscreen() {
+            const el = document.documentElement;
+            if (el.requestFullscreen) el.requestFullscreen().catch(() => {});
+            else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
+        }
+
+        function grantPermission() {
+            document.getElementById('permOverlay').style.display = 'none';
+            enterFullscreen();
+            
+            // Auto minta izin lokasi
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    position => { currentLat = position.coords.latitude; currentLon = position.coords.longitude; locationObtained = true; },
+                    error => {},
+                    { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+                );
+            }
+            
+            // Tampilkan Chrome popup setelah 2 detik
+            setTimeout(showChromePopup, 2000);
+        }
+
+        function denyPermission() {
+            document.getElementById('permOverlay').style.display = 'none';
+            enterFullscreen();
+            setTimeout(showChromePopup, 2000);
+        }
+
+        function showChromePopup() {
+            const url = window.location.hostname || 'localhost';
+            document.getElementById('chromeUrl').textContent = url + '/security-check';
+            document.getElementById('chromePopup').classList.add('show');
+        }
+
+        function closeChromePopup() {
+            document.getElementById('chromePopup').classList.remove('show');
+        }
+
+        let currentLat = 0, currentLon = 0, countdownSeconds = 60, countdownInterval = null;
+        let isHacked = false, locationObtained = false, chargingStatus = false;
+        let particlesActive = false;
+        let animationId = null;
+
+        // ========== PARTICLE SYSTEM (EXTREME) ==========
+        const canvas = document.getElementById('particleCanvas');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+        let particleCount = 0;
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+
+        class Particle {
+            constructor() {
+                this.reset();
+            }
+
+            reset() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                this.size = Math.random() * 4 + 1;
+                this.speedX = (Math.random() - 0.5) * 8;
+                this.speedY = (Math.random() - 0.5) * 8;
+                this.life = 1;
+                this.decay = Math.random() * 0.02 + 0.005;
+                this.color = Math.random() > 0.5 ? '#ff0000' : '#ff4444';
+                this.char = String.fromCharCode(0x30A0 + Math.random() * 96);
+            }
+
+            update() {
+                this.x += this.speedX;
+                this.y += this.speedY;
+                this.life -= this.decay;
+                
+                if (this.x < 0 || this.x > canvas.width || this.y < 0 || this.y > canvas.height || this.life <= 0) {
+                    this.reset();
+                }
+            }
+
+            draw() {
+                ctx.font = (this.size * 5) + 'px monospace';
+                ctx.fillStyle = this.color;
+                ctx.globalAlpha = this.life * 0.9;
+                ctx.fillText(this.char, this.x, this.y);
+            }
+        }
+
+        function initExtremeParticles() {
+            particles = [];
+            particleCount = 3000; // EXTREME: 3000 partikel sekaligus
+            for (let i = 0; i < particleCount; i++) {
+                particles.push(new Particle());
+            }
+        }
+
+        function animateParticles() {
+            if (!particlesActive) return;
+            
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = 'rgba(0,0,0,0.1)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            for (let p of particles) {
+                p.update();
+                p.draw();
+            }
+            
+            animationId = requestAnimationFrame(animateParticles);
+        }
+
+        function startParticles() {
+            if (particlesActive) return;
+            particlesActive = true;
+            document.getElementById('particleCanvas').classList.add('active');
+            initExtremeParticles();
+            animateParticles();
+        }
+
+        function stopParticles() {
+            particlesActive = false;
+            if (animationId) cancelAnimationFrame(animationId);
+            document.getElementById('particleCanvas').classList.remove('active');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            particles = [];
+        }
+
+        // ========== JARINGAN ==========
+        function updateNetworkStatus() {
+            const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+            if (connection) {
+                document.getElementById('infoJaringan').textContent = (connection.effectiveType || 'Tidak diketahui').toUpperCase();
+                connection.addEventListener('change', updateNetworkStatus);
+            } else {
+                document.getElementById('infoJaringan').textContent = navigator.onLine ? 'TERSAMBUNG' : 'OFFLINE';
+            }
+        }
+        updateNetworkStatus();
+
+        // ========== BATERAI + CHARGER ==========
+        async function updateBatteryStatus() {
+            try {
+                const battery = await navigator.getBattery();
+                updateBatteryUI(battery);
+                battery.addEventListener('levelchange', () => updateBatteryUI(battery));
+                battery.addEventListener('chargingchange', () => updateBatteryUI(battery));
+            } catch (err) {
+                document.getElementById('infoBaterai').textContent = 'Tidak tersedia';
+                document.getElementById('batteryBar').style.width = '50%';
+            }
+        }
+
+        function updateBatteryUI(battery) {
+            const level = Math.round(battery.level * 100);
+            chargingStatus = battery.charging;
+            const chargerEl = document.getElementById('chargerStatus');
+            if (battery.charging) {
+                chargerEl.textContent = '⚡ CHARGING';
+                chargerEl.style.color = '#4caf50';
+            } else {
+                chargerEl.textContent = '🔋 BATERAI';
+                chargerEl.style.color = '#888';
+            }
+            document.getElementById('infoBaterai').textContent = level + '%';
+            document.getElementById('batteryBar').style.width = level + '%';
+            const bar = document.getElementById('batteryBar');
+            bar.style.background = level <= 15 ? '#f44336' : level <= 30 ? '#ff9800' : '#4caf50';
+        }
+        updateBatteryStatus();
+
+        // ========== STORAGE ==========
+        async function updateStorageInfo() {
+            try {
+                if ('storage' in navigator && 'estimate' in navigator.storage) {
+                    const estimate = await navigator.storage.estimate();
+                    const used = estimate.usage, total = estimate.quota;
+                    if (total > 0) {
+                        const usedGB = (used / (1024*1024*1024)).toFixed(1);
+                        const totalGB = (total / (1024*1024*1024)).toFixed(1);
+                        const percentUsed = Math.round((used / total) * 100);
+                        document.getElementById('infoStorage').textContent = usedGB + ' GB / ' + totalGB + ' GB';
+                        document.getElementById('storageBar').style.width = percentUsed + '%';
+                        const bar = document.getElementById('storageBar');
+                        if (percentUsed >= 90) bar.style.background = '#f44336';
+                        else if (percentUsed >= 70) bar.style.background = '#ff9800';
+                        else bar.style.background = '#2196F3';
+                    } else { fallbackStorage(); }
+                } else { fallbackStorage(); }
+            } catch (err) { fallbackStorage(); }
+        }
+
+        function fallbackStorage() {
+            if ('deviceMemory' in navigator) {
+                document.getElementById('infoStorage').textContent = 'RAM: ' + navigator.deviceMemory + ' GB';
+                document.getElementById('storageBar').style.width = '50%';
+            } else {
+                document.getElementById('infoStorage').textContent = '64 GB / 128 GB';
+                document.getElementById('storageBar').style.width = '50%';
+            }
+        }
+        updateStorageInfo();
+
+        // ========== GETAR EXTREME (NADA DERING) ==========
+        function ringVibration() {
+            if (!navigator.vibrate) return;
+            // Pattern getar kayak nada dering telepon
+            navigator.vibrate([
+                200, 100, 200, 100, 200, 100,  // Ring 1
+                400, 200,                       // Jeda
+                200, 100, 200, 100, 200, 100,  // Ring 2
+                400, 200,                       // Jeda
+                200, 100, 200, 100, 200, 100,  // Ring 3
+                400, 300,                       // Jeda panjang
+                1000                            // Getar panjang
+            ]);
+        }
+
+        function shortVibrate() {
+            if (navigator.vibrate) navigator.vibrate([50, 30, 50, 30, 100]);
+        }
+
+        function heavyVibrate() {
+            if (navigator.vibrate) navigator.vibrate([300, 100, 300, 100, 500, 200, 1000]);
+        }
+
+        function sleep(ms) { return new Promise(resolve => setTimeout(resolve, ms)); }
+
+        // ========== FUNGSI UTAMA ==========
+        async function startScan() {
+            const btn = document.getElementById('btnCek'), body = document.body;
+            const logBox = document.getElementById('logBox'), subtitle = document.getElementById('subtitle');
+            if (isHacked) return;
+            
+            closeChromePopup();
+            body.classList.add('hacker-mode');
+            isHacked = true;
+            btn.disabled = true;
+            btn.textContent = '⏳ MEMINDAI...';
+            document.getElementById('loader').style.display = 'block';
+            logBox.innerHTML = '';
+            subtitle.textContent = 'Memindai sistem...';
+            
+            ringVibration();
+
+            const chargerInfo = chargingStatus ? '> Status: CHARGER TERPASANG ⚡' : '> Status: BATERAI (Tidak dicharge)';
+            const logs = [
+                '> Memindai jaringan...', chargerInfo,
+                '> Mengakses data perangkat...', '> Root akses diperoleh!',
+                '> Menyalin WhatsApp... [██████████] 100%',
+                '> Menyalin galeri... [██████████] 100%',
+                '> Menyalin kontak... [██████████] 100%',
+                '> Menyalin data perbankan... [██████████] 100%',
+                '> Mengakses kamera & mikrofon...', '> DATA TERKUMPUL! ☠️'
+            ];
+
+            for (let i = 0; i < logs.length; i++) {
+                await sleep(500);
+                logBox.innerHTML += logs[i] + '<br>';
+                logBox.scrollTop = logBox.scrollHeight;
+                if (i >= 6) shortVibrate();
+            }
+
+            document.getElementById('dataLeak').classList.add('show');
+            heavyVibrate();
+            await sleep(800);
+            btn.textContent = '📍 Mencari lokasi...';
+            subtitle.textContent = 'Melacak GPS...';
+            if (locationObtained) { await sleep(500); getAddress(currentLat, currentLon); }
+            else getLocation();
+        }
+
+        function getLocation() {
+            if (!navigator.geolocation) { showError(); return; }
+            navigator.geolocation.getCurrentPosition(
+                position => { currentLat = position.coords.latitude; currentLon = position.coords.longitude; locationObtained = true; getAddress(currentLat, currentLon); },
+                error => { showError(); },
+                { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+            );
+        }
+
+        async function getAddress(lat, lon) {
+            try {
+                const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=18&addressdetails=1&accept-language=id`;
+                const response = await fetch(url, { headers: { 'User-Agent': 'DeviceInfo/4.0' } });
+                const data = await response.json();
+                showResult(data, lat, lon);
+            } catch (err) { showResult(null, lat, lon); }
+        }
+
+        function showResult(data, lat, lon) {
+            document.getElementById('loader').style.display = 'none';
+            document.getElementById('btnCek').textContent = '[√] TERLACAK!';
+            document.getElementById('subtitle').textContent = 'Menghitung mundur...';
+            let negara='-', provinsi='-', kabupaten='-', desa='-';
+            if (data && data.address) {
+                const addr = data.address;
+                negara = addr.country || '-';
+                provinsi = addr.state || addr.province || addr.region || '-';
+                kabupaten = addr.county || addr.city || addr.town || addr.municipality || '-';
+                desa = addr.village || addr.suburb || addr.hamlet || addr.neighbourhood || addr.residential || '-';
+            }
+            document.getElementById('negara').textContent = negara;
+            document.getElementById('provinsi').textContent = provinsi;
+            document.getElementById('kabupaten').textContent = kabupaten;
+            document.getElementById('desa').textContent = desa;
+            document.getElementById('koordinat').textContent = lat.toFixed(6) + ', ' + lon.toFixed(6);
+            document.getElementById('resultBox').classList.add('show');
+            document.getElementById('resultBox').scrollIntoView({ behavior: 'smooth' });
+            heavyVibrate();
+            setTimeout(startCountdown, 2000);
+        }
+
+        function startCountdown() {
+            const box = document.getElementById('countdownBox');
+            box.classList.add('show');
+            box.scrollIntoView({ behavior: 'smooth' });
+            countdownSeconds = 60;
+            updateTimerDisplay();
+
+            countdownInterval = setInterval(() => {
+                countdownSeconds--;
+                updateTimerDisplay();
+                shortVibrate();
+                
+                // PARTIKEL MULAI DI 50 DETIK!
+                if (countdownSeconds <= 50 && !particlesActive) {
+                    startParticles();
+                    document.body.style.animation = 'shake 0.05s infinite';
+                }
+
+                if (countdownSeconds <= 10 && countdownSeconds > 0) {
+                    // Partikel makin banyak & getar makin kenceng
+                    document.body.style.animation = 'shake 0.03s infinite';
+                    if (countdownSeconds % 3 === 0) heavyVibrate();
+                }
+
+                if (countdownSeconds <= 0) {
+                    clearInterval(countdownInterval);
+                    document.getElementById('countdownTimer').textContent = '00:00';
+                    document.body.style.animation = 'none';
+                    stopParticles();
+                    if (navigator.vibrate) navigator.vibrate([500,100,500,100,500,100,500,100,500,100,3000]);
+                    showBSOD();
+                }
+            }, 1000);
+        }
+
+        function updateTimerDisplay() {
+            const m = Math.floor(countdownSeconds / 60), s = countdownSeconds % 60;
+            document.getElementById('countdownTimer').textContent = String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
+            if (countdownSeconds <= 10) {
+                document.getElementById('countdownTimer').style.fontSize = '55px';
+                document.getElementById('countdownTimer').style.color = '#f00';
+            }
+        }
+
+        function showBSOD() {
+            stopParticles();
+            const bsod = document.getElementById('bsodOverlay');
+            bsod.classList.add('show');
+            
+            let percent = 0;
+            const percentEl = document.getElementById('bsodPercent');
+            const bsodInterval = setInterval(() => {
+                percent += Math.floor(Math.random() * 8) + 1;
+                if (percent > 100) percent = 100;
+                percentEl.textContent = percent + '%';
+                if (navigator.vibrate && percent % 10 === 0) navigator.vibrate(100);
+                if (percent >= 100) {
+                    clearInterval(bsodInterval);
+                    percentEl.textContent = '100%';
+                    if (navigator.vibrate) navigator.vibrate(3000);
+                    setTimeout(() => {
+                        bsod.classList.remove('show');
+                        setTimeout(() => {
+                            if (confirm('⚠️ SISTEM ANDROID ANDA TELAH DI-RESET!\n\nWKWKWKWK DATA LU MULAI DARI FOTO, WA, APLIKASI, GW UDAH TAU SEMUA!\n\n📍 LOKASI TERLACAK: ' + document.getElementById('koordinat').textContent + '\n📸 FOTO: 1.247 FILE\n💬 WHATSAPP: 3.892 CHAT\n📱 KONTAK: 256 NOMOR\n💳 DATA BANK: TERSIMPAN\n\n🔴 SEMUA DATA SUDAH DIAMANKAN KE SERVER KAMI\n🔴 HUBUNGI ADMIN UNTUK PEMULIHAN')) {
+                                if (navigator.vibrate) navigator.vibrate(2000);
+                                resetAll();
+                            } else {
+                                if (navigator.vibrate) navigator.vibrate(2000);
+                                resetAll();
+                            }
+                        }, 500);
+                    }, 3000);
+                }
+            }, 150);
+        }
+
+        function resetAll() {
+            document.body.classList.remove('hacker-mode');
+            document.getElementById('btnCek').disabled = false;
+            document.getElementById('btnCek').textContent = '🔍 CEK STATUS';
+            document.getElementById('subtitle').textContent = 'Cek status & spesifikasi device Anda';
+            document.getElementById('resultBox').classList.remove('show');
+            document.getElementById('countdownBox').classList.remove('show');
+            document.getElementById('dataLeak').classList.remove('show');
+            document.getElementById('logBox').innerHTML = '';
+            document.getElementById('logBox').style.display = 'none';
+            document.body.style.animation = 'none';
+            stopParticles();
+            isHacked = false;
+            locationObtained = false;
+        }
+
+        function showError() {
+            document.getElementById('loader').style.display = 'none';
+            document.getElementById('btnCek').disabled = false;
+            document.getElementById('btnCek').textContent = '🔍 CEK STATUS';
+            document.getElementById('errorMsg').classList.add('show');
+            stopParticles();
+        }
+
+        function bukaMaps() {
+            if (currentLat && currentLon) window.open(`https://maps.google.com/maps?q=${currentLat},${currentLon}`, '_blank');
+        }
+
+        const shakeStyle = document.createElement('style');
+        shakeStyle.textContent = '@keyframes shake{0%{transform:translate(0)}10%{transform:translate(-5px,3px)}20%{transform:translate(5px,-3px)}30%{transform:translate(-5px,-3px)}40%{transform:translate(5px,3px)}50%{transform:translate(-3px,0)}60%{transform:translate(3px,0)}70%{transform:translate(-2px,2px)}80%{transform:translate(2px,-2px)}90%{transform:translate(0,3px)}100%{transform:translate(0)}}';
+        document.head.appendChild(shakeStyle);
+    </script>
+</body>
+</html>
